@@ -17,13 +17,13 @@ python -m venv .venv
 
 ## Using it
 
-| Action | Result |
-| --- | --- |
-| Tap the mic / `Space` | Start listening: halos and bubbles follow your real voice level |
+| Action                           | Result                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Tap the mic / `Space`            | Start listening: halos and bubbles follow your real voice level                                         |
 | Pause for ~1.5 s, or tap the mic | Buddy thinks (dots orbit), then speaks a reply aloud with moving mouth, rings and word-by-word captions |
-| Tap the mic while it speaks | Interrupt and listen again |
-| `X` / `Esc` | Stop the current turn (`X` while idle closes the window) |
-| Model pill | Pick Waza / Waza Pro / Waza Mini. Each uses a different voice and pace (Zira, David, Hazel on Windows) |
+| Tap the mic while it speaks      | Interrupt and listen again                                                                              |
+| `X` / `Esc`                      | Stop the current turn (`X` while idle closes the window)                                                |
+| Model pill                       | Pick Waza / Waza Pro / Waza Mini. Each uses a different voice and pace (Zira, David, Hazel on Windows)  |
 
 ## Layout
 
