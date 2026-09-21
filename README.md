@@ -1,38 +1,61 @@
-# Buddy AI — voice interface (Python / PySide6)
+# Buddy AI (web)
 
-A voice-assistant screen with an animated coral "buddy" in the middle.
-It listens through your microphone and replies out loud using the
-operating system's built-in voice. There is no speech recognition yet, so the
-reply is a generic one chosen by how much you said (nothing, a little, a lot).
-If the mic or text-to-speech is unavailable, it falls back to a simulation.
+A voice assistant page with an animated coral buddy. Tap the mic and talk: the
+buddy follows your voice, waits until you pause, then answers out loud with a
+generic reply and word-by-word captions. Everything runs in the browser, so
+there's no server and no API key.
 
-## Run
+| Feature                                      | Browser API                | Where it works                              |
+| -------------------------------------------- | -------------------------- | ------------------------------------------- |
+| Mic level (halos, bubbles, auto end-of-turn) | Web Audio + `getUserMedia` | All modern browsers, on https or localhost  |
+| Spoken reply                                 | `speechSynthesis`          | All modern browsers (voices vary by device) |
+| Showing and quoting what you said            | `SpeechRecognition`        | Chrome, Edge, Safari                        |
 
-```powershell
-cd desktop
-python -m venv .venv
-.venv\Scripts\python -m pip install -r requirements.txt
-.venv\Scripts\python -m buddy_ai            # or: -m buddy_ai --name Ada
+If something is missing or blocked, the page falls back quietly: it simulates
+your voice, or shows captions without sound.
+
+- Change the greeting name with `?name=Ada` in the URL (default: Favour).
+- The model pill (Waza / Waza Pro / Waza Mini) switches the voice, pitch and pace.
+- Keyboard: `Space` talks or finishes, `Esc` stops.
+
+## Develop
+
+```sh
+npm install
+npm run dev          # http://localhost:5173
+npm run test:unit    # conversation logic tests
+npm run build        # type-check + production build into dist/
 ```
 
-## Using it
+Code lives in `src/buddy/`:
 
-| Action                           | Result                                                                                                  |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Tap the mic / `Space`            | Start listening: halos and bubbles follow your real voice level                                         |
-| Pause for ~1.5 s, or tap the mic | Buddy thinks (dots orbit), then speaks a reply aloud with moving mouth, rings and word-by-word captions |
-| Tap the mic while it speaks      | Interrupt and listen again                                                                              |
-| `X` / `Esc`                      | Stop the current turn (`X` while idle closes the window)                                                |
-| Model pill                       | Pick Waza / Waza Pro / Waza Mini. Each uses a different voice and pace (Zira, David, Hazel on Windows)  |
+- `voice.ts`: state machine and replies
+- `audio.ts`: browser audio
+- `renderer.ts`: the canvas buddy
 
-## Layout
+The screen itself is `src/components/BuddyVoice.vue`.
 
-- `buddy_ai/voice.py`: conversation state machine, generic replies, simulators (no Qt)
-- `buddy_ai/audio.py`: live mic level (adaptive noise floor) and text-to-speech playback
-- `buddy_ai/buddy.py`: the blob, its face, halos, rings and bubbles
-- `buddy_ai/controls.py`: painted buttons, mic button, model pill, toast
-- `buddy_ai/window.py`: the screen that puts them together and runs the 60 fps loop
-- `tests/`: state machine tests (`.venv\Scripts\python -m pytest tests`)
+The original Python desktop version is in `desktop/`. It isn't part of the web build.
 
-To answer what was actually said, add speech-to-text (for example Whisper) where
-listening ends and pass the transcript to a language model in `Conversation._pick_reply`.
+## Deploy
+
+The build is a static site (`dist/`). The page needs **https** for the
+microphone, and every host below provides it.
+
+**Vercel (CLI, no git needed)**
+
+```sh
+npx vercel          # first run: log in, accept the detected Vite settings
+npx vercel --prod   # publish to your production URL
+```
+
+`.vercelignore` keeps the `desktop/` Python app out of the upload.
+
+**Netlify (drag and drop)**: run `npm run build`, then drop the `dist` folder
+onto https://app.netlify.com/drop.
+
+**From GitHub (Vercel or Netlify)**: push this folder to a repository and
+import it. Build command `npm run build`, output directory `dist`.
+
+Anyone with the link can open the page. Audio stays in each visitor's browser.
+Speech recognition in Chrome and Edge is processed by the browser vendor's servers.
