@@ -1,15 +1,9 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import AppIcon from './AppIcon.vue'
 import { BrowserMic, BrowserRecognizer, BrowserSpeaker } from '@/buddy/audio'
 import { Buddy } from '@/buddy/renderer'
-import {
-  approach,
-  Conversation,
-  type Mode,
-  type SpeechTimeline,
-  type VoiceStyle,
-} from '@/buddy/voice'
+import { approach, Conversation, type Mode, type VoiceStyle } from '@/buddy/voice'
 
 const props = defineProps<{ name: string }>()
 
@@ -34,8 +28,6 @@ const buddy = new Buddy()
 const mode = ref<Mode>('idle')
 const transcript = ref('')
 const liveMic = ref(false)
-const captionWords = shallowRef<string[]>([])
-const captionProgress = shallowRef<number[]>([])
 const model = ref<ModelName>('Waza')
 const menuOpen = ref(false)
 const toastText = ref('')
@@ -54,7 +46,7 @@ conversation.onNotice(showToast)
 let width = 0
 let height = 0
 
-/** Fit buddy + caption block between the top buttons and the mic. */
+/** Fit buddy + status text between the top buttons and the mic. */
 function geometry() {
   const top = 84
   const bottom = height - 208
@@ -84,7 +76,6 @@ function resize() {
 let raf = 0
 let last = 0
 let micGlow = 0
-let captionSource: SpeechTimeline | null = null
 
 function frame(now: number) {
   const dt = last ? Math.min((now - last) / 1000, 0.05) : 0.016
@@ -130,13 +121,6 @@ function syncUi(dt: number) {
   if (mode.value !== conversation.mode) mode.value = conversation.mode
   if (transcript.value !== conversation.transcript) transcript.value = conversation.transcript
   if (liveMic.value !== conversation.liveMic) liveMic.value = conversation.liveMic
-  const speech = conversation.speech
-  if (speech && speech !== captionSource) {
-    captionSource = speech
-    captionWords.value = speech.words.map((w) => w.text)
-  }
-  if (speech && conversation.mode === 'speaking') captionProgress.value = speech.wordProgress()
-
   const listening = conversation.mode === 'listening'
   micGlow = approach(micGlow, listening ? 0.35 + 0.65 * conversation.level : 0, 12, dt)
   micButton.value?.style.setProperty('--glow', micGlow.toFixed(3))
@@ -185,17 +169,6 @@ function showToast(text: string) {
   toastTimer = window.setTimeout(() => (toastVisible.value = false), 1900)
 }
 
-// Caption word colour: dim grey -> warm white as it is spoken.
-function wordStyle(i: number) {
-  const k = captionProgress.value[i] ?? 0
-  const e = Math.sqrt(k)
-  const mix = (a: number, b: number) => Math.round(a + (b - a) * e)
-  return {
-    color: `rgb(${mix(92, 234)},${mix(92, 229)},${mix(96, 220)})`,
-    top: k > 0 && k < 1 ? `${(1 - k) * 3}px` : '0',
-  }
-}
-
 let observer: ResizeObserver | null = null
 
 onMounted(() => {
@@ -228,6 +201,29 @@ onBeforeUnmount(() => {
       >
         <AppIcon name="menu" />
       </button>
+
+      <div class="logo">
+        <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <radialGradient id="buddy-mark" cx="0.38" cy="0.34" r="0.75">
+              <stop offset="0" stop-color="#ffc4aa" />
+              <stop offset="0.5" stop-color="#e8805e" />
+              <stop offset="1" stop-color="#b04c32" />
+            </radialGradient>
+          </defs>
+          <ellipse cx="32" cy="32" rx="29" ry="28" fill="url(#buddy-mark)" />
+          <ellipse cx="22.5" cy="29" rx="3.5" ry="5.5" fill="#421a12" />
+          <ellipse cx="41.5" cy="29" rx="3.5" ry="5.5" fill="#421a12" />
+          <path
+            d="M26 40q6 5 12 0"
+            fill="none"
+            stroke="#421a12"
+            stroke-width="2.6"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span class="wordmark">Buddy AI</span>
+      </div>
       <button class="round" aria-label="Settings" @click="showToast('Settings are coming soon')">
         <AppIcon name="gear" />
       </button>
@@ -256,15 +252,6 @@ onBeforeUnmount(() => {
       <div class="layer" :class="{ on: mode === 'thinking' }">
         <p class="status thinking">
           Thinking<span class="dots"><i>.</i><i>.</i><i>.</i></span>
-        </p>
-      </div>
-
-      <div class="layer captions" :class="{ on: mode === 'speaking' }">
-        <p>
-          <template v-for="(word, i) in captionWords" :key="i">
-            <span :style="wordStyle(i)">{{ word }}</span
-            >{{ ' ' }}
-          </template>
         </p>
       </div>
     </section>
@@ -493,16 +480,24 @@ button:focus-visible {
   overflow: hidden;
 }
 
-.captions p {
-  max-width: 520px;
-  margin: 0 auto;
-  font-size: 18.5px;
-  line-height: 1.55;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  pointer-events: none;
 }
 
-.captions span {
-  position: relative;
-  transition: color 0.12s linear;
+.mark {
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.wordmark {
+  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+  font-size: 19px;
+  letter-spacing: 0.01em;
+  color: #e4ded4;
 }
 
 /* ---- mic ---- */
