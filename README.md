@@ -2,7 +2,7 @@
 
 A voice assistant page with an animated coral buddy. Tap the mic and talk: the
 buddy follows your voice, waits until you pause, then answers out loud with a
-generic reply and word-by-word captions. Everything runs in the browser, so
+generic reply. Everything runs in the browser, so
 there's no server and no API key.
 
 | Feature                                      | Browser API                | Where it works                              |
@@ -14,7 +14,10 @@ there's no server and no API key.
 If something is missing or blocked, the page falls back quietly: it simulates
 your voice, or shows captions without sound.
 
-- Change the greeting name with `?name=Ada` in the URL (default: Favour).
+- Sign in with any name: that name is what the buddy calls you. It's a dummy login —
+  nothing is checked or sent anywhere, and the name is kept in this browser only
+  (`localStorage`). `?name=Ada` in the URL just prefills the field.
+- The `X` button signs out when nothing is happening, or stops the current turn.
 - The model pill (Waza / Waza Pro / Waza Mini) switches the voice, pitch and pace.
 - Keyboard: `Space` talks or finishes, `Esc` stops.
 
@@ -26,6 +29,9 @@ npm run dev          # http://localhost:5173
 npm run test:unit    # conversation logic tests
 npm run build        # type-check + production build into dist/
 ```
+
+- `src/session.ts`: the dummy sign-in
+- `src/components/LoginScreen.vue`: the sign-in screen
 
 Code lives in `src/buddy/`:
 
